@@ -82,6 +82,7 @@ def make_text(chains, n_gram=2):
 
 
     while next_word:
+        # Add back in our condition for 140 characters.
         if next_word[-1] in [".", "?", "!"]:
             text_list.append(next_word)
             break
@@ -89,43 +90,51 @@ def make_text(chains, n_gram=2):
         next_group = tuple(text_list[-n_gram:])
         next_word = random.choice(chains[next_group])
 
+    
+
     return " ".join(text_list)
 
 
 
+
 input_path = sys.argv[1]
-#another_input_path = sys.argv[2]
-
-n_gram = int(raw_input("What size n-gram would you like to use? > "))
-
+# another_input_path = sys.argv[2]
 # Open the file and turn it into one long string
 input_text_1 = open_and_read_file(input_path)
 # input_text_2 = open_and_read_file(another_input_path)
-
-# Get a Markov chain
-chains = {}
-chains_1 = make_chains(input_text_1, chains, n_gram)
-# chains_2 = make_chains(input_text_2, chains, n_gram)
-
-#print chains_1
-#print chains_2
-
-# print chains
-
-# Produce random text
-random_text = make_text(chains, n_gram)
 
 api = twitter.Api(
     consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
     consumer_secret=os.environ['TWITTER_CONSUMER_SECRET'],
     access_token_key=os.environ['TWITTER_ACCESS_TOKEN_KEY'],
-    access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET']
-    )
+    access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET'])
 
-# print api.VerifyCredentials()
-print "random text:", random_text
-status = api.PostUpdate(random_text)
+user_choice = ""
+while user_choice != "q":
+    n_gram = int(raw_input("What size n-gram would you like to use? > "))
 
-print status.text
+    # Get a Markov chain
+    chains = {}
+    # modifies in place the chains dictionary
+    make_chains(input_text_1, chains, n_gram)
+    
+    # print chains
+
+    # Produce random text
+    random_text = make_text(chains, n_gram)
+   
+    # print api.VerifyCredentials()
+    print "random text:", random_text
+    
+    try:  
+        status = api.PostUpdate(random_text)
+        print status.text
+    except:
+        print "You already tweeted this."
+
+
+    
+
+    user_choice = raw_input("Press enter to tweet again.  Press q to quit.> ")
 
 # Check out .update for dictionaries
